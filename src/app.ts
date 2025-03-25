@@ -46,8 +46,41 @@ function validate(validateInput: Verifiable) {
     }
     return isValid
 }
+// ============ project List class ============
+class ProjectList{
 
+    templateElement: HTMLTemplateElement;
+    hostElement :HTMLDivElement;
+    element: HTMLElement;
+
+    constructor(private type:"active"|"finished"){
+        this.templateElement = document.getElementById("project-list")! as HTMLTemplateElement
+        this.hostElement = document.getElementById("app")! as HTMLDivElement
+
+        const importNode = document.importNode(
+            this.templateElement.content, 
+            true
+        );
+        this.element = importNode.firstElementChild as HTMLElement
+        this.element.id = `${this.type}-projects` // adding id using js
+        
+        this.attach()
+        this.renderContent()
+    }
+
+    private attach(){
+        this.hostElement.insertAdjacentElement("beforeend",this.element)
+    }
+    private renderContent(){
+        const  listId = `${this.type}-projects-list`
+        this.element.querySelector("ul")!.id = listId
+        this.element.querySelector("h2")!.textContent = 
+        this.type.toUpperCase()+" PORJECTS";
+    }
+}
+// ============ project class ============
 class ProjectInput {
+
     templateElement: HTMLTemplateElement
     hostElement: HTMLElement
     element: HTMLFormElement
@@ -143,4 +176,8 @@ class ProjectInput {
 
 }
 
+//=================== Main program ======================================
 const prjInput = new ProjectInput();
+const activeProject = new ProjectList("active")
+const finishedProject = new ProjectList("finished")
+// const finished2Project = new ProjectList("active")
