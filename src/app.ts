@@ -1,4 +1,56 @@
-//auto binder
+// create project 
+enum ProjectStatus {"Active" , "Finished"}
+class Project{
+    constructor(public id:string ,
+         public title:string ,
+         public description:string ,
+         public peopleNum:number,
+         public status:ProjectStatus
+         ){
+
+    }
+}
+//============ project State Management ===============
+type listener = (items:Project[])=>void 
+class ProjectState{
+    private listeners:any[]=[]
+    private projects:Project[]=[]
+    private static instance:ProjectState
+
+    private constructor(){ //prevent using constructor by using private
+
+    }
+
+    static getInstance(){
+        if (this.instance) {return this.instance}
+        
+        this.instance = new ProjectState()
+        return this.instance
+    }
+
+    addListener(listenerFn:listener){
+        this.listeners.push(listenerFn)
+    }
+
+    addProject(title:string , description:string , people:number){
+
+        const newProject = new Project(
+        Math.random().toString(),
+        title,description,
+        people,
+        ProjectStatus.Active
+        )
+
+        this.projects.push(newProject)
+        for(const listenerFn of this.listeners){
+            listenerFn(this.projects.slice())
+        }
+    }
+
+}
+
+const projectState = ProjectState.getInstance() ;
+//======================== auto binder ======================
 function autoBinder(
     _target: any, //_ underscore used for informing tsc that this prams will never be used
     _methodName: string,
@@ -52,11 +104,12 @@ class ProjectList{
     templateElement: HTMLTemplateElement;
     hostElement :HTMLDivElement;
     element: HTMLElement;
+    assignedProject:Project[]
 
     constructor(private type:"active"|"finished"){
         this.templateElement = document.getElementById("project-list")! as HTMLTemplateElement
         this.hostElement = document.getElementById("app")! as HTMLDivElement
-
+        this.assignedProject =[]
         const importNode = document.importNode(
             this.templateElement.content, 
             true
@@ -64,8 +117,30 @@ class ProjectList{
         this.element = importNode.firstElementChild as HTMLElement
         this.element.id = `${this.type}-projects` // adding id using js
         
+        projectState.addListener((projects:Project[])=>{
+            const relevantProject = projects.filter(prj =>{ 
+                if (this.type === "active") {
+                    return prj.status === ProjectStatus.Active
+                }else{
+                    return prj.status ===ProjectStatus.Finished
+                }
+            })
+            this.assignedProject=relevantProject
+            this.renderProjects()
+        })
+
         this.attach()
         this.renderContent()
+    }
+
+    private renderProjects(){
+        const listEl = document.getElementById(`${this.type}-projects-list`) as HTMLUListElement
+        listEl.innerHTML=""      // to remove duplication of new added projects
+        for(const projItem of this.assignedProject){
+            const listItem =document.createElement('li')
+            listItem.textContent = projItem.title 
+            listEl?.appendChild(listItem)
+        }
     }
 
     private attach(){
@@ -77,6 +152,8 @@ class ProjectList{
         this.element.querySelector("h2")!.textContent = 
         this.type.toUpperCase()+" PORJECTS";
     }
+
+    
 }
 // ============ project class ============
 class ProjectInput {
@@ -161,6 +238,7 @@ class ProjectInput {
         if (Array.isArray(userInput)) {
             const [title, desc, people] = userInput
             console.log(title, desc, people);
+            projectState.addProject(title, desc, people)
             this.clearInput(); 
         }
     }
