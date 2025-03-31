@@ -125,3 +125,21 @@ button:active {
   border: 1px solid #ff0062;
   background: #f7f7f7;
 }
+
+/* added */
+
+.ls-title{
+font-size: 20px ;
+color: black;
+font-weight: 600;
+}
+.ls-desc{
+  font-size: 16px;
+  color: rgba(0, 0, 0, 0.7);
+  font-weight: 600;
+}
+.ls-people{
+  font-size: 16px;
+  color: rgba(0, 0, 0, 0.7);
+  font-weight: 600;
+}

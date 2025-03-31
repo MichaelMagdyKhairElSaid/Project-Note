@@ -144,6 +144,28 @@ abstract class Component<T extends HTMLElement , U extends HTMLElement>{
         abstract renderContent():void
 }
 
+//============= projectItem class =============
+class ProjectItem extends Component<HTMLUListElement,HTMLLIElement>{
+    private project:Project;
+
+    constructor(hostId:string,project:Project){
+        super(hostId,"single-project",false,project.id) //NOTE wrong parameter order generate import node problem 
+        this.project = project
+
+        this.configure()
+        this.renderContent()
+    
+    }
+    configure(){}
+    
+    renderContent(){
+        this.element.querySelector('h2')!.textContent = this.project.title
+        this.element.querySelector('h3')!.textContent = this.project.description
+        this.element.querySelector('P')!.textContent = this.project.peopleNum.toString()
+    }
+
+}
+
 // ============ project List class ============
 class ProjectList extends Component<HTMLDivElement,HTMLElement>{
 
@@ -156,14 +178,44 @@ class ProjectList extends Component<HTMLDivElement,HTMLElement>{
         this.renderContent()
     }
 
-    private renderProjects(){
+   private renderProjects(){
         const listEl = document.getElementById(`${this.type}-projects-list`) as HTMLUListElement
         listEl.innerHTML=""      // to remove duplication of new added projects
         for(const projItem of this.assignedProject){
-            const listItem =document.createElement('li')
-            listItem.textContent = projItem.title 
-            listEl?.appendChild(listItem)
-        }
+            //==========my way for adding styling to each project ==========
+          /*   const listItem =document.createElement('li')
+            const titleEle = document.createElement("p")
+            const descEle = document.createElement("p")
+            const peopleEle = document.createElement("p")
+            const button = document.createElement("button")
+            titleEle.textContent = `Title :${projItem.title}`
+            descEle.textContent =`Description :${projItem.description}`
+            peopleEle.textContent = `people :${projItem.peopleNum}`
+            button.textContent =`Finished`
+
+            titleEle.classList.add("ls-title")
+            descEle.classList.add("ls-desc")
+            peopleEle.classList.add("ls-people")
+            button.addEventListener("click",()=>{
+                if (this.type === "active") {
+                    console.log("active");
+                    
+                    this.type = "finished"
+                    this.configure()
+                }else{
+                    console.log("finished");
+                    this.type = "active"
+                    this.configure()
+                }
+            })
+
+            listItem.appendChild(titleEle)
+            listItem.appendChild(descEle)
+            listItem.appendChild(peopleEle)
+            listItem.appendChild(button)
+            listEl?.appendChild(listItem) */ 
+            new ProjectItem(this.element.querySelector("ul")!.id,projItem) // main element is section which have ul we want to put li in it 
+        } 
     }
     configure(): void {
         projectState.addListener((projects:Project[])=>{
@@ -174,7 +226,7 @@ class ProjectList extends Component<HTMLDivElement,HTMLElement>{
                     return prj.status ===ProjectStatus.Finished
                 }
             })
-            this.assignedProject=relevantProject
+            this.assignedProject=relevantProject;
             this.renderProjects()
         })
     }
@@ -183,11 +235,12 @@ class ProjectList extends Component<HTMLDivElement,HTMLElement>{
         const  listId = `${this.type}-projects-list`
         this.element.querySelector("ul")!.id = listId
         this.element.querySelector("h2")!.textContent = 
-        this.type.toUpperCase()+" PORJECTS";
+        this.type.toUpperCase()+" PROJECTS";
     }
 
     
 }
+
 // ============ project class ============
 class ProjectInput extends Component<HTMLElement,HTMLFormElement> {
     
