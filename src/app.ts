@@ -1,3 +1,14 @@
+//============= Drag & Drop interfaces ===============
+
+ interface Draggable{
+ dragStartHandler(event:DragEvent):void
+ dragEndHandler(event:DragEvent):void
+}
+interface DragTarget{
+    dragOverHandler(event:DragEvent):void
+    dropHandler(event:DragEvent):void
+    dragLeaveHandler(event:DragEvent):void
+}
 // create project 
 enum ProjectStatus {"Active" , "Finished"}
 class Project{
@@ -49,6 +60,19 @@ class ProjectState extends State<Project>{
         )
 
         this.projects.push(newProject)
+        this.updateListeners()
+    }
+
+
+    moveProject(projectId:string , newStatus :ProjectStatus){ 
+       const project = this.projects.find(prj=>projectId==prj.id)
+        if(project && project.status !== newStatus){
+            project.status = newStatus
+            this.updateListeners()
+        }
+    }
+
+    private updateListeners(){
         for(const listenerFn of this.listeners){
             listenerFn(this.projects.slice())
         }
@@ -145,8 +169,12 @@ abstract class Component<T extends HTMLElement , U extends HTMLElement>{
 }
 
 //============= projectItem class =============
-class ProjectItem extends Component<HTMLUListElement,HTMLLIElement>{
+class ProjectItem extends Component<HTMLUListElement,HTMLLIElement> implements Draggable{
     private project:Project;
+
+    get persons(){
+        return this.project.peopleNum > 1 ? 'Persons' : 'Person';
+    }
 
     constructor(hostId:string,project:Project){
         super(hostId,"single-project",false,project.id) //NOTE wrong parameter order generate import node problem 
@@ -156,18 +184,34 @@ class ProjectItem extends Component<HTMLUListElement,HTMLLIElement>{
         this.renderContent()
     
     }
-    configure(){}
+    @autoBinder
+    dragStartHandler(event: DragEvent): void {
+       event.dataTransfer!.setData('text/plain',this.project.id)
+       event.dataTransfer!.effectAllowed = 'move'
+        
+    }
+
+    @autoBinder
+    dragEndHandler(_: DragEvent): void {
+        console.log("drag end");
+        
+    }
+
+    configure(){
+        this.element.addEventListener("dragstart",this.dragStartHandler)
+        this.element.addEventListener("dragend",this.dragEndHandler)
+    }
     
     renderContent(){
         this.element.querySelector('h2')!.textContent = this.project.title
-        this.element.querySelector('h3')!.textContent = this.project.description
-        this.element.querySelector('P')!.textContent = this.project.peopleNum.toString()
+        this.element.querySelector('h3')!.textContent = ` ${this.project.peopleNum} ${this.persons} assigned `
+        this.element.querySelector('P')!.textContent = this.project.description
     }
 
 }
 
 // ============ project List class ============
-class ProjectList extends Component<HTMLDivElement,HTMLElement>{
+class ProjectList extends Component<HTMLDivElement,HTMLElement> implements DragTarget{
 
     assignedProject:Project[]
 
@@ -177,43 +221,37 @@ class ProjectList extends Component<HTMLDivElement,HTMLElement>{
         this.configure()
         this.renderContent()
     }
+    @autoBinder
+    dragOverHandler(event: DragEvent): void {
+        if (event.dataTransfer && event.dataTransfer.types[0] ==='text/plain') {
+            event.preventDefault() //make dropping allowed in browser
+            const listEl = this.element.querySelector("ul")!
+        listEl.classList.add("droppable") // add class to change color when dragged obj is over
+        }
+        
+    }
+    @autoBinder
+    dropHandler(event: DragEvent): void {
+        const prjId = event.dataTransfer!.getData("text/plain")
+        projectState.moveProject(prjId,this.type === 'active' ? ProjectStatus.Active:ProjectStatus.Finished)
+    }
+
+    @autoBinder
+    dragLeaveHandler(_: DragEvent): void {
+        const listEl = this.element.querySelector("ul")!
+        listEl.classList.remove("droppable")
+    }
 
    private renderProjects(){
+    
+        this.element.addEventListener("dragover",this.dragOverHandler)
+        this.element.addEventListener("dragleave",this.dragLeaveHandler)
+        this.element.addEventListener("drop",this.dropHandler)
+
         const listEl = document.getElementById(`${this.type}-projects-list`) as HTMLUListElement
         listEl.innerHTML=""      // to remove duplication of new added projects
+
         for(const projItem of this.assignedProject){
-            //==========my way for adding styling to each project ==========
-          /*   const listItem =document.createElement('li')
-            const titleEle = document.createElement("p")
-            const descEle = document.createElement("p")
-            const peopleEle = document.createElement("p")
-            const button = document.createElement("button")
-            titleEle.textContent = `Title :${projItem.title}`
-            descEle.textContent =`Description :${projItem.description}`
-            peopleEle.textContent = `people :${projItem.peopleNum}`
-            button.textContent =`Finished`
-
-            titleEle.classList.add("ls-title")
-            descEle.classList.add("ls-desc")
-            peopleEle.classList.add("ls-people")
-            button.addEventListener("click",()=>{
-                if (this.type === "active") {
-                    console.log("active");
-                    
-                    this.type = "finished"
-                    this.configure()
-                }else{
-                    console.log("finished");
-                    this.type = "active"
-                    this.configure()
-                }
-            })
-
-            listItem.appendChild(titleEle)
-            listItem.appendChild(descEle)
-            listItem.appendChild(peopleEle)
-            listItem.appendChild(button)
-            listEl?.appendChild(listItem) */ 
             new ProjectItem(this.element.querySelector("ul")!.id,projItem) // main element is section which have ul we want to put li in it 
         } 
     }
