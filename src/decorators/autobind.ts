@@ -1,4 +1,4 @@
-namespace App{
+
     //======================== auto binder ======================
 export function autoBinder(
     _target: any, //_ underscore used for informing tsc that this prams will never be used
@@ -14,5 +14,4 @@ export function autoBinder(
     }
     return adDEscriptor
 
-}
 }

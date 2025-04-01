@@ -1,6 +1,4 @@
-namespace App{
-    
-export interface Verifiable {
+    export interface Verifiable {
     value: string | number;
     required?: boolean;
     minLength?: number;
@@ -21,8 +19,7 @@ export function validate(validateInput: Verifiable) {
     if (maxLength != null && typeof value === "string") {
         isValid = isValid && value.length <= maxLength
     }
-    console.log("value type :" + typeof value);
-
+    
     if (min != null && typeof value === "number") {
         isValid = isValid && +value >= min
     }
@@ -30,6 +27,4 @@ export function validate(validateInput: Verifiable) {
         isValid = isValid && +value <= max
     }
     return isValid
-}
-
 }

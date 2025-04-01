@@ -1,5 +1,8 @@
-///<reference path="base-component.ts"/>
-namespace App{
+import { Component } from "./base-component.js"
+import {Verifiable, validate} from '../util/validation.js'
+import { autoBinder } from "../decorators/autobind.js"
+import { projectState } from "../state/project-state.js"
+
     // ============ project input class ============
 export class ProjectInput extends Component<HTMLElement,HTMLFormElement> {
     
@@ -70,11 +73,9 @@ export class ProjectInput extends Component<HTMLElement,HTMLFormElement> {
         const userInput = this.gatherData()
         if (Array.isArray(userInput)) {
             const [title, desc, people] = userInput
-            console.log(title, desc, people);
             projectState.addProject(title, desc, people)
             this.clearInput(); 
         }
     }
 }
 
-}
